@@ -1,5 +1,27 @@
 import os
 
+schema_write_file = {
+    "type": "function",
+    "function": {
+        "name": "write_file",
+        "description": "Writes text to a given file and creates the file if needed",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "File path to write the content to, relative to the working directory (default is the working directory itself)",
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Content that is written to the specified file",
+                },
+            },
+            "required": ["file_path", "content"]
+        },
+    },
+}
+
 def write_file(working_directory: str, file_path: str, content: str) -> str:
     try:
         working_directory_abspath = os.path.abspath(working_directory)
@@ -8,9 +30,10 @@ def write_file(working_directory: str, file_path: str, content: str) -> str:
         if valid_target_file_path == False:
             return f'Error: Cannot write to "{file_path}" as it is outside the permitted working directory'
         if os.path.isdir(target_file_path) == True:
+            print(f"DEBUG target_file_path: {target_file_path}")
             return f'Error: Cannot write to "{file_path}" as it is a directory'
         #Makes sure all parent directories exist
-        os.makedirs(file_path,exist_ok=True)
+        os.makedirs(os.path.dirname(target_file_path),exist_ok=True)
         #Writes to the content to the file
         with open(target_file_path, mode='w') as f:
             f.write(content)

@@ -1,6 +1,31 @@
 import os
 import subprocess
 
+schema_run_python_file = {
+    "type": "function",
+    "function": {
+        "name": "run_python_file",
+        "description": "Run Python file (.py file) and optionally accepts command-line arguments",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "path to the Python script to execute",
+                },
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "optional command-line arguments passed to the script",
+                },
+            },
+            "required": ["file_path"]
+        },
+    },
+}
+
 def run_python_file(working_directory: str, file_path: str, args: list[str] | None = None) -> str:
     try:
         working_directory_abspath = os.path.abspath(working_directory)
@@ -10,7 +35,7 @@ def run_python_file(working_directory: str, file_path: str, args: list[str] | No
             return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
         if os.path.isfile(target_file_path) == False:
             return f'Error: "{file_path}" does not exist or is not a regular file'
-        if target_file_path[-2:] != 'py':
+        if target_file_path[-3:] != '.py':
             return f'Error: "{file_path}" is not a Python file'
         command = ["python", target_file_path]
         if args != None:

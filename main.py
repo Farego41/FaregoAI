@@ -2,6 +2,9 @@ import os
 import argparse
 from dotenv import load_dotenv
 from openai import OpenAI
+from prompts import system_prompt
+from call_functions import available_functions, call_function
+import json
 
 load_dotenv()
 api_key = os.environ.get("OPENROUTER_API_KEY")
@@ -22,10 +25,10 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
     
-    messages = [{"role": "user","content": args.user_prompt,}]
-    response = client.chat.completions.create(model = 'openrouter/free', messages = messages)
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user","content": args.user_prompt,}]
+    response = client.chat.completions.create(model = 'openrouter/free', messages = messages, tools = available_functions, temperature = 0)
     
-    #Print all the things!
+    #Print all the things (either the text response or the function calls it wants to make)!
     if response.usage == None:
         raise RuntimeError('Failed API Request')
     else:
@@ -33,7 +36,15 @@ def main():
             print(f'User prompt: {args.user_prompt}')
             print(f'Prompt tokens: {response.usage.prompt_tokens}')
             print(f'Response tokens: {response.usage.completion_tokens}')
-        print(f'Response: {response.choices[0].message.content}')
+        if response.choices[0].message.tool_calls:
+            for tool_call in response.choices[0].message.tool_calls:
+                result_message = call_function(tool_call, args.verbose)
+                if result_message["content"] == None:
+                    raise Exception('Content is empty')
+                else:
+                    print(f"-> {result_message['content']}")
+        else:
+            print(f'Response: {response.choices[0].message.content}')
 
 if __name__ == "__main__":
     main()
